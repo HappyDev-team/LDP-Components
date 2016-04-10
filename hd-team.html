@@ -8,55 +8,79 @@
         #member-info {
             display: inline-block;
         }
+        .detail > div > img {
+            width: 100%;
+            max-height: none;
+            border-radius: 0;
+            max-width: none;
+        }
+        .detail #member-info {
+            display: inline-block;
+        }
     </style>
     <div>
         <content select="img"></content>
         <content id="member-info"></content>
+    </div>
 </template>
 
-<script type="text/javascript" src="../ldpframework.js"></script>
+<script type="text/javascript" src="https://raw.githubusercontent.com/Open-Initiative/LDP-framework/master/ldpframework.js"></script>
 <script>
-    var localDoc = document._currentScript.ownerDocument;
-    window.store = new MyStore({context: "http://owl.openinitiative.com/oicontext.jsonld"});
-    
-    document.registerElement('hd-team-member', {
-        prototype: Object.create(HTMLElement.prototype, {
+    (function(){
+        var localDoc = document._currentScript.ownerDocument;
+        window.store = new MyStore({context: "http://owl.openinitiative.com/oicontext.jsonld"});
+        
+        var MemberPrototype = Object.create(HTMLElement.prototype, {
             createdCallback: {
                 value: function() {
-                    var shadow = this.createShadowRoot();
-                    if(this.dataset.src) {
-                        store.get(this.dataset.src).then(function(member) {
-                            var img = document.createElement("img");
-                            img.src = member["foaf:img"];
-                            shadow.appendChild(img);
-                            shadow.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
-                        });
-                    }
+                    this.loadData();
                     var clone = document.importNode(localDoc.querySelector('#member-template').content, true);
-                    shadow.appendChild(clone);
+                    this.addEventListener('click', this.toggleDetail);
+                    this.createShadowRoot().appendChild(clone);
                 }
             }
-        })
-    });
-    
-    document.registerElement('hd-team', {
-        prototype: Object.create(HTMLElement.prototype, {
-            createdCallback: {
-                value: function() {
-                    if(this.dataset.src) {
-                        store.list(this.dataset.src).then(function(list) {
-                            list.forEach(function(member) {
-                                var memberElt = document.createElement("hd-team-member");
-                                var img = document.createElement("img");
-                                img.src = member["foaf:img"];
-                                memberElt.appendChild(img);
-                                memberElt.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
-                                this.appendChild(memberElt);
+        });
+        
+        MemberPrototype.loadData = function loadData() {
+            if(this.dataset.src) {
+                store.get(this.dataset.src).then(function(member) {
+                    var img = document.createElement("img");
+                    img.src = member["foaf:img"];
+                    this.appendChild(img);
+                    this.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+                });
+            }
+        };
+        
+        MemberPrototype.toggleDetail = function toggleDetail() {
+            Array.prototype.forEach.call(this.parentNode.childNodes, (elt) => {
+                    if(elt != this) elt.style.display = (this.className == "detail"?"block":"none");
+                });
+            this.className = (this.className == "detail"?"":"detail");
+        };
+        
+        document.registerElement('hd-team-member', {prototype: MemberPrototype});
+        
+        document.registerElement('hd-team', {
+            prototype: Object.create(HTMLElement.prototype, {
+                createdCallback: {
+                    value: function() {
+                        if(this.dataset.src) {
+                            store.list(this.dataset.src).then(function(list) {
+                                list.forEach(function(member) {
+                                    var memberElt = document.createElement("hd-team-member");
+                                    var img = document.createElement("img");
+                                    img.src = member["foaf:img"];
+                                    memberElt.appendChild(img);
+                                    memberElt.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+                                    memberElt.dataset.src = member["@id"];
+                                    this.appendChild(memberElt);
+                                }.bind(this));
                             }.bind(this));
-                        }.bind(this));
+                        }
                     }
                 }
-            }
-        })
-    });
+            })
+        });
+    })();
 </script>

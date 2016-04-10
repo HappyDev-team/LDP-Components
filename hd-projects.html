@@ -1,0 +1,64 @@
+<template id="project-template">
+    <style scoped>
+        img {
+            max-height: 4em;
+            max-width: 3em;
+        }
+        #project-info {
+            display: inline-block;
+        }
+    </style>
+    <div>
+        <content select="img"></content>
+        <content id="project-info"></content>
+    </div>
+</template>
+
+<script type="text/javascript" src="https://raw.githubusercontent.com/Open-Initiative/LDP-framework/master/ldpframework.js"></script>
+<script>
+    (function(){
+        var localDoc = document._currentScript.ownerDocument;
+        window.store = new MyStore({context: "http://owl.openinitiative.com/oicontext.jsonld"});
+        
+        document.registerElement('hd-project', {
+            prototype: Object.create(HTMLElement.prototype, {
+                createdCallback: {
+                    value: function() {
+                        var shadow = this.createShadowRoot();
+                        if(this.dataset.src) {
+                            store.get(this.dataset.src).then(function(project) {
+                                var img = document.createElement("img");
+                                img.src = project["project_picture"];
+                                shadow.appendChild(img);
+                                shadow.appendChild(document.createTextNode(project["project_title"]));
+                            });
+                        }
+                        var clone = document.importNode(localDoc.querySelector('#project-template').content, true);
+                        shadow.appendChild(clone);
+                    }
+                }
+            })
+        });
+        
+        document.registerElement('hd-project-list', {
+            prototype: Object.create(HTMLElement.prototype, {
+                createdCallback: {
+                    value: function() {
+                        if(this.dataset.src) {
+                            store.list(this.dataset.src).then(function(list) {
+                                list.forEach(function(project) {
+                                    var projectElt = document.createElement("hd-project");
+                                    var img = document.createElement("img");
+                                    img.src = project["project_picture"];
+                                    projectElt.appendChild(img);
+                                    projectElt.appendChild(document.createTextNode(project["project_title"]));
+                                    this.appendChild(projectElt);
+                                }.bind(this));
+                            }.bind(this));
+                        }
+                    }
+                }
+            })
+        });
+    })();
+</script>
