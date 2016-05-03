@@ -1,27 +1,72 @@
 <template id="member-template">
     <style scoped>
-        img {
-            max-height: 4em;
+        #conteneur-global {
+			border-bottom: 		solid 1px lightgray;
+			padding-top:		10px;
+			padding-bottom:		20px;
+		}
+		#conteneur-global:hover {
+			cursor:			pointer;
+		}
+		h2 {
+			display: none;
+			text-align:center;
+		}
+		img {
+            height: 48px;
             border-radius: 50px;
-            max-width: 3em;
+            width: 48px;
+			vertical-align:	middle;
         }
         #member-info {
             display: inline-block;
+			vertical-align: middle;
+			padding-left: 10px;
         }
+		#member-info > .member-fn {
+			color: black;
+			font-weight: bold;
+		}
+		#member-info > .member-name {
+			color:				RGB(211,211,211);
+			transition:			color 2s, font-weight 4s;
+		}
+		#conteneur-global:hover #member-info > .member-name {
+			color: black;
+			font-weight: bold;
+			transition:	0s;
+		}
+		#member-infos{
+			display: none;
+		}
+		.detail > #conteneur-global{
+			border: none;
+		}
+		.detail h2 {
+			display: block;
+		}
         .detail > div > img {
             width: 100%;
-            max-height: none;
+            height: initial;
             border-radius: 0;
-            max-width: none;
         }
         .detail #member-info {
-            display: inline-block;
+            display: none;
         }
+		.detail #member-infos {
+			display: block;
+		}
     </style>
-    <div>
+    <div id="conteneur-global">
+		<content select="h2"></content>
         <content select="img"></content>
-        <content id="member-info"></content>
-    </div>
+		<div id="member-info">
+			<content select="span"></content>
+		</div>
+		<div id="member-infos">
+			<content></content>
+		</div>
+	</div>
 </template>
 
 <script type="text/javascript" src="https://raw.githubusercontent.com/Open-Initiative/LDP-framework/master/ldpframework.js"></script>
@@ -44,18 +89,37 @@
         MemberPrototype.loadData = function loadData() {
             if(this.dataset.src) {
                 store.get(this.dataset.src).then(function(member) {
+					var titreFiche = document.createElement("h2");
+					titreFiche.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
                     var img = document.createElement("img");
                     img.src = member["foaf:img"];
+					var fn = document.createElement("span");
+					fn.attr("class","member-fn");
+					fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
+					var name = document.createElement("span");
+					name.attr("class","member-name");
+					name.appendChild(document.createTextNode(member["foaf:name"]));
                     this.appendChild(img);
-                    this.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+                    this.appendChild(fn);
+					this.appendChild(name);
+					if(typeof member["av:biography"] !== "undefined" ){
+						var bio = document.createElement("p");
+						bio.appendChild(document.createTextNode(member["av:biography"]));
+						this.appendChild(bio);
+					}else{
+						this.appendChild(document.createTextNode("Aucune bio de trouvé: Undefined!"));
+					}
                 });
             }
         };
         
         MemberPrototype.toggleDetail = function toggleDetail() {
             Array.prototype.forEach.call(this.parentNode.childNodes, (elt) => {
+					//Pour pouvoir modifier la façon dont se cache les images il faudra modifier cette fonction.
+					// Pour cela il faudra certainement remplacer le display: none par un animate ou autre.
                     if(elt != this) elt.style.display = (this.className == "detail"?"block":"none");
                 });
+			//Cette fonction sera certainement aussi à modifier... En fonction des modification au-dessus.
             this.className = (this.className == "detail"?"":"detail");
         };
         
@@ -69,10 +133,27 @@
                             store.list(this.dataset.src).then(function(list) {
                                 list.forEach(function(member) {
                                     var memberElt = document.createElement("hd-team-member");
-                                    var img = document.createElement("img");
+                                    var titreFiche = document.createElement("h2");
+									titreFiche.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+									var img = document.createElement("img");
+									var fn = document.createElement("span");
+									fn.className = "member-fn";
+									fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
+									var name = document.createElement("span");
+									name.className = "member-name";
+									name.appendChild(document.createTextNode(member["foaf:name"]));
                                     img.src = member["foaf:img"];
+									memberElt.appendChild(titreFiche);
                                     memberElt.appendChild(img);
-                                    memberElt.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+                                    memberElt.appendChild(fn);
+									memberElt.appendChild(name);
+									if(typeof member["av:biography"] !== "undefined" ){
+										var bio = document.createElement("p");
+										bio.appendChild(document.createTextNode(member["av:biography"]));
+										memberElt.appendChild(bio);
+									}else{
+										memberElt.appendChild(document.createTextNode("Aucune bio de trouvé: Undefined!"));
+									}
                                     memberElt.dataset.src = member["@id"];
                                     this.appendChild(memberElt);
                                 }.bind(this));
