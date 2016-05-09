@@ -6,14 +6,14 @@
 			padding-top:		10px;
 			padding-bottom:		20px;
 		}
-		h2 {
+		.titre-membre {
 			display: none;
 			text-align:center;
 		}
-		img {
-            max-height: 4em;
+		.image-membre {
+            height: 48px;
             border-radius: 50px;
-            max-width: 3em;
+            width: 48px;
 			vertical-align:	middle;
         }
         #member-reduce {
@@ -34,37 +34,47 @@
 			font-weight: bold;
 			transition:	0s;
 		}
-		#member-full{
-			display: none;
-		}
 		.detail {
 			border: none;
 		}
-		.detail h2 {
+		.detail .titre-membre {
 			display: block;
 		}
-        .detail > img {
+        .detail > .image-membre {
             width: 100%;
-            max-height: none;
             border-radius: 0;
-            max-width: none;
+			height:	initial;
         }
         .detail #member-reduce {
             display: none;
         }
-		.detail #member-full {
-			display: block;
+		.detail .img-project {
+			width:		48px;
+			height:		48px;
+		}
+		#member-full {
+			text-align:	center;
+		}
+		#member-full ul{
+			text-align:	left;
+		}
+		#member-full > #cityContainer {
+			display: flex;
+			justify-content: center;
+			align-items:	center;
+		}
+		
+		#cityContainer h3{
+			margin-right:	5px;
 		}
     </style>
-		<content select="h2"></content>
-        <content select="img"></content>
+		<content select=".titre-membre"></content>
+        <content select=".image-membre"></content>
 		<div id="member-reduce">
 			<content select=".member-fn"></content>
 			<content select=".member-name"></content>
 		</div>
-		<div id="member-full">
-			<content select=".member-full"></content>
-		</div>
+		<content></content>
 </template>
 
 <script type="text/javascript" src="https://raw.githubusercontent.com/Open-Initiative/LDP-framework/master/ldpframework.js"></script>
@@ -88,14 +98,16 @@
             if(this.dataset.src) {
                 store.get(this.dataset.src).then(function(member) {
 					var titreFiche = document.createElement("h2");
+					titreFiche.setAttribute("class","titre-membre");
 					titreFiche.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
                     var img = document.createElement("img");
+					img.setAttribute("class","image-membre");
                     img.src = member["foaf:img"];
 					var fn = document.createElement("span");
-					fn.attr("class","member-fn");
+					fn.setAttribute("class","member-fn");
 					fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
 					var name = document.createElement("span");
-					name.attr("class","member-name");
+					name.setAttribute("class","member-name");
 					name.appendChild(document.createTextNode(member["foaf:name"]));
 					
                     this.appendChild(img);
@@ -115,14 +127,82 @@
             this.className = (this.className == "detail"?"":"detail");
 			
 			//Voir pour tester la width de l'image l'action qui sera a effectuée?
-			if(this.dataset.src){
-				store.get(this.dataset.src).then(function(member){
-					if(typeof member["av:biography"] !== "undefined"){
-						var bio = document.createElement("p");
-						bio.appendChild(document.createTextNode(member["av:biography"]));
-						this.appendChild(bio);
-					}
-				}.bind(this));
+			var imag = this.querySelector(".image-membre");
+			//console.log(imag.offsetHeight);
+			if(imag.offsetHeight != 48){
+				if(this.dataset.src){
+					store.get(this.dataset.src).then(function(member){
+						var container = document.createElement("div");
+						container.setAttribute("id","member-full");
+						if(member["av:biography"]){
+							var bio = document.createElement("p");
+							bio.appendChild(document.createTextNode(member["av:biography"]));
+							container.appendChild(bio);
+						}
+						if(member["city"]){
+							var cityContainer = document.createElement("div");
+							cityContainer.setAttribute("id","cityContainer");
+							var cityTitle = document.createElement("h3");
+							cityTitle.appendChild(document.createTextNode("VILLE :"));
+							var city = document.createElement("span");
+							city.appendChild(document.createTextNode(member["city"]));
+							cityContainer.appendChild(cityTitle);
+							cityContainer.appendChild(city);
+							container.appendChild(cityContainer);
+						}
+						if(member["skillA"]){
+							var skillsTitle = document.createElement("h3");
+							skillsTitle.appendChild(document.createTextNode("COMPETENCES"));
+							var skills = document.createElement("ul");
+							var list = document.createElement("li");
+							list.appendChild(document.createTextNode(member["skillA"]));
+							skills.appendChild(list);
+							if(member["skillB"]){
+								var list = document.createElement("li");
+								list.appendChild(document.createTextNode(member["skillB"]));
+								skills.appendChild(list);
+							}
+							if(member["skillB"]){
+								var list = document.createElement("li");
+								list.appendChild(document.createTextNode(member["skillB"]));
+								skills.appendChild(list);
+							}
+							if(member["skillC"]){
+								var list = document.createElement("li");
+								list.appendChild(document.createTextNode(member["skillC"]));
+								skills.appendChild(list);
+							}
+							if(member["skillD"]){
+								var list = document.createElement("li");
+								list.appendChild(document.createTextNode(member["skillD"]));
+								skills.appendChild(list);
+							}
+							if(member["skillE"]){
+								var list = document.createElement("li");
+								list.appendChild(document.createTextNode(member["skillE"]));
+								skills.appendChild(list);
+							}
+							container.appendChild(skillsTitle);
+							container.appendChild(skills);
+						}
+						if(member["foaf:currentProject"]){
+							store.list(member["foaf:currentProject"]).then(function(listing){
+								listing.forEach(function(project){
+									var imgProj = document.createElement("img");
+									imgProj.className("img-project");
+									imgProj.src = project["project_picture"];
+									container.appendChild(imgProj);
+								});
+							}.bind(container));
+						}
+						this.appendChild(container);
+					}.bind(this));
+				}
+			}else{
+				if(this.querySelector("#member-full")){
+					var cible = this.querySelector("#member-full");
+					cible.remove();
+				}
 			}
 			
 			//console.log(this);
@@ -139,8 +219,10 @@
                                 list.forEach(function(member) {
                                     var memberElt = document.createElement("hd-team-member");
                                     var titreFiche = document.createElement("h2");
+									titreFiche.className ="titre-membre";
 									titreFiche.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
 									var img = document.createElement("img");
+									img.className = "image-membre";
 									var fn = document.createElement("span");
 									fn.className = "member-fn";
 									fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
@@ -148,7 +230,6 @@
 									name.className = "member-name";
 									name.appendChild(document.createTextNode(member["foaf:name"]));
                                     img.src = member["foaf:img"];
-									
 									memberElt.appendChild(titreFiche);
                                     memberElt.appendChild(img);
                                     memberElt.appendChild(fn);
