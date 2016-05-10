@@ -1,17 +1,46 @@
 <template id="project-template">
     <style scoped>
-        img {
-            max-height: 4em;
-            max-width: 3em;
+		hd-project {
+			display:			block;
+			border-bottom: 		solid 1px lightgray;
+			padding-top:		10px;
+			padding-bottom:		20px;
+		}
+		hd-project:hover {
+			cursor:	pointer;
+		}
+		.project-title {
+			display: none;
+			text-align: center;
+		}
+        .project-image {
+            height:		48px;
+			width:		48px;
+			border-radius:	50px;
+			vertical-align:	middle;
         }
-        #project-info {
-            display: inline-block;
-        }
+        .detail {
+			border:	none;
+		}
+		.detail .project-title {
+			display: block;
+		}
+		.detail > .project-image {
+			width:	100%;
+			height:	initial;
+			border-radius:	initial;
+		}
+		.detail > .reduce-title {
+			display:	none;
+		}
+		#project-full {
+			text-align: center;
+		}
     </style>
-    <div>
-        <content select="img"></content>
-        <content id="project-info"></content>
-    </div>
+		<content select=".project-title"></content>
+        <content select=".project-image"></content>
+		<content select=".reduce-title"></content>
+		<content></content>
 </template>
 
 <script type="text/javascript" src="https://raw.githubusercontent.com/Open-Initiative/LDP-framework/master/ldpframework.js"></script>
@@ -20,25 +49,83 @@
         var localDoc = document._currentScript.ownerDocument;
         window.store = new MyStore({context: "http://owl.openinitiative.com/oicontext.jsonld"});
         
-        document.registerElement('hd-project', {
-            prototype: Object.create(HTMLElement.prototype, {
-                createdCallback: {
-                    value: function() {
-                        var shadow = this.createShadowRoot();
-                        if(this.dataset.src) {
-                            store.get(this.dataset.src).then(function(project) {
-                                var img = document.createElement("img");
-                                img.src = project["project_picture"];
-                                shadow.appendChild(img);
-                                shadow.appendChild(document.createTextNode(project["project_title"]));
-                            });
-                        }
-                        var clone = document.importNode(localDoc.querySelector('#project-template').content, true);
-                        shadow.appendChild(clone);
-                    }
+		var ProjectPrototype = Object.create(HTMLElement.prototype, {
+			createdCallback: {
+                value: function() {
+                    this.loadData();
+                    var clone = document.importNode(localDoc.querySelector('#project-template').content, true);
+                    this.addEventListener('click', this.toggleDetail);
+                    this.createShadowRoot().appendChild(clone);
                 }
-            })
-        });
+            }
+		});
+		
+		 ProjectPrototype.loadData = function loadData() {
+            if(this.dataset.src) {
+                store.get(this.dataset.src).then(function(project) {
+					var projectTitle = document.createElement("h2");
+					projectTitle.setAttribute("class","project-title");
+					projectTitle.appendChild(document.createTextNode(project["project_title"]));
+                    var img = document.createElement("img");
+					img.setAttribute("class","project-image");
+                    img.src = project["project_picture"];
+					var reduceTitle = document.createElement("span");
+					reduceTitle.setAttribute("class","reduce-title");
+					reduceTitle.appendChild(document.createTextNode(project["project_title"]));
+					
+					this.appendChild(projectTitle);
+                    this.appendChild(img);
+                    this.appendChild(reduceTitle);
+                });
+            }
+        };
+		
+		ProjectPrototype.toggleDetail = function toggleDetail(event) {
+			 Array.prototype.forEach.call(this.parentNode.childNodes, (elt) => {
+                    if(elt != this) elt.style.display = (this.className == "detail"?"block":"none");
+				});
+            this.className = (this.className == "detail"?"":"detail");
+			
+			var imag = this.querySelector(".project-image");
+			if(imag.offsetHeight != 48){
+				if(this.dataset.src){
+					store.get(this.dataset.src).then(function(project){
+						var container = document.createElement("div");
+						container.setAttribute("id","project-full");
+						if(project["project_description"]){
+							var description = document.createElement("p");
+							description.appendChild(document.createTextNode(project["project_description"]));
+							container.appendChild(description);
+						}
+						if(project["project_technology"]){
+							var technoTitle = document.createElement("h3");
+							technoTitle.appendChild(document.createTextNode("TECHNOLOGIES UTILISEES"));
+							var techno = document.createElement("p");
+							techno.appendChild(document.createTextNode(project["project_technology"]));
+							container.appendChild(technoTitle);
+							container.appendChild(techno);
+						}
+						if(project["project_url"]){
+							var urlTitle = document.createElement("h3");
+							urlTitle.appendChild(document.createTextNode("VISITER LE SITE"));
+							var url = document.createElement("a");
+							url.setAttribute("href",project["project_url"]);
+							url.appendChild(document.createTextNode(project["project_url"]));
+							container.appendChild(urlTitle);
+							container.appendChild(url);
+						}
+						this.appendChild(container);
+					}.bind(this));
+				}
+			}else{
+				if(this.querySelector("#project-full")){
+					var cible = this.querySelector("#project-full");
+					cible.remove();
+				}
+			}
+		};
+		
+        document.registerElement('hd-project', {prototype: ProjectPrototype});
         
         document.registerElement('hd-project-list', {
             prototype: Object.create(HTMLElement.prototype, {
@@ -48,10 +135,19 @@
                             store.list(this.dataset.src).then(function(list) {
                                 list.forEach(function(project) {
                                     var projectElt = document.createElement("hd-project");
+									var projectTitle = document.createElement("h2");
+									projectTitle.setAttribute("class","project-title");
+									projectTitle.appendChild(document.createTextNode(project["project_title"]));
                                     var img = document.createElement("img");
+									img.className = "project-image";
                                     img.src = project["project_picture"];
-                                    projectElt.appendChild(img);
-                                    projectElt.appendChild(document.createTextNode(project["project_title"]));
+									var projectReduce = document.createElement("span");
+									projectReduce.className = "reduce-title";
+									projectReduce.appendChild(document.createTextNode(project["project_title"]));
+                                    projectElt.appendChild(projectTitle);
+									projectElt.appendChild(img);
+                                    projectElt.appendChild(projectReduce);
+									projectElt.dataset.src = project["@id"];
                                     this.appendChild(projectElt);
                                 }.bind(this));
                             }.bind(this));
