@@ -6,6 +6,9 @@
 			padding-top:		10px;
 			padding-bottom:		20px;
 		}
+		hd-team-member:hover {
+			cursor:	pointer;
+		}
 		.member-title {
 			display: none;
 			text-align:center;
@@ -110,6 +113,7 @@
 					name.setAttribute("class","member-name");
 					name.appendChild(document.createTextNode(member["foaf:name"]));
 					
+					this.appendChild(memberTitle);
                     this.appendChild(img);
                     this.appendChild(fn);
 					this.appendChild(name);
