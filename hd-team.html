@@ -6,11 +6,11 @@
 			padding-top:		10px;
 			padding-bottom:		20px;
 		}
-		.titre-membre {
+		.member-title {
 			display: none;
 			text-align:center;
 		}
-		.image-membre {
+		.member-image {
             height: 48px;
             border-radius: 50px;
             width: 48px;
@@ -37,10 +37,10 @@
 		.detail {
 			border: none;
 		}
-		.detail .titre-membre {
+		.detail .member-title {
 			display: block;
 		}
-        .detail > .image-membre {
+        .detail > .member-image {
             width: 100%;
             border-radius: 0;
 			height:	initial;
@@ -68,8 +68,8 @@
 			margin-right:	5px;
 		}
     </style>
-		<content select=".titre-membre"></content>
-        <content select=".image-membre"></content>
+		<content select=".member-title"></content>
+        <content select=".member-image"></content>
 		<div id="member-reduce">
 			<content select=".member-fn"></content>
 			<content select=".member-name"></content>
@@ -97,11 +97,11 @@
         MemberPrototype.loadData = function loadData() {
             if(this.dataset.src) {
                 store.get(this.dataset.src).then(function(member) {
-					var titreFiche = document.createElement("h2");
-					titreFiche.setAttribute("class","titre-membre");
-					titreFiche.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+					var memberTitle = document.createElement("h2");
+					memberTitle.setAttribute("class","member-title");
+					memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
                     var img = document.createElement("img");
-					img.setAttribute("class","image-membre");
+					img.setAttribute("class","member-image");
                     img.src = member["foaf:img"];
 					var fn = document.createElement("span");
 					fn.setAttribute("class","member-fn");
@@ -127,7 +127,7 @@
             this.className = (this.className == "detail"?"":"detail");
 			
 			//Voir pour tester la width de l'image l'action qui sera a effectuée?
-			var imag = this.querySelector(".image-membre");
+			var imag = this.querySelector(".member-image");
 			//console.log(imag.offsetHeight);
 			if(imag.offsetHeight != 48){
 				if(this.dataset.src){
@@ -218,11 +218,11 @@
                             store.list(this.dataset.src).then(function(list) {
                                 list.forEach(function(member) {
                                     var memberElt = document.createElement("hd-team-member");
-                                    var titreFiche = document.createElement("h2");
-									titreFiche.className ="titre-membre";
-									titreFiche.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+                                    var memberTitle = document.createElement("h2");
+									memberTitle.className ="member-title";
+									memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
 									var img = document.createElement("img");
-									img.className = "image-membre";
+									img.className = "member-image";
 									var fn = document.createElement("span");
 									fn.className = "member-fn";
 									fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
@@ -230,7 +230,7 @@
 									name.className = "member-name";
 									name.appendChild(document.createTextNode(member["foaf:name"]));
                                     img.src = member["foaf:img"];
-									memberElt.appendChild(titreFiche);
+									memberElt.appendChild(memberTitle);
                                     memberElt.appendChild(img);
                                     memberElt.appendChild(fn);
 									memberElt.appendChild(name);
