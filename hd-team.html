@@ -1,17 +1,31 @@
 <template id="member-template">
     <style scoped>
-        hd-team-member {
+		hd-team-member {
 			display:			block;
 			border-bottom: 		solid 1px lightgray;
 			padding-top:		10px;
 			padding-bottom:		20px;
+			padding-left:	20px;
+			color:	black;
+			width:	100%;
+			margin-top: 0;
 		}
-		hd-team-member:hover {
-			cursor:	pointer;
+		.backImage {
+			position: absolute;
+			top:	70px;
+			left:	16px;
+			display: none;
+		}
+		.backImage:hover {
+			cursor: pointer;
 		}
 		.member-title {
 			display: none;
+			width:	275px;
+			margin-left:	auto;
+			margin-right:	auto;
 			text-align:center;
+			margin-top:	0;
 		}
 		.member-image {
             height: 48px;
@@ -22,23 +36,33 @@
         #member-reduce {
             display: inline-block;
 			vertical-align: middle;
-			padding-left: 10px;
         }
-		#member-reduce > .member-fn {
+		#member-reduce:hover {
+			cursor: pointer;
+		}
+		#member-reduce > .hd-member-fn {
 			color: black;
 			font-weight: bold;
 		}
-		#member-reduce > .member-name {
+		#member-reduce > .hd-member-name {
 			color:				RGB(211,211,211);
 			transition:			color 2s, font-weight 4s;
 		}
-		hd-team-member:hover #member-reduce > .member-name {
+		hd-team-member:hover #member-reduce > .hd-member-name {
 			color: black;
 			font-weight: bold;
 			transition:	0s;
 		}
 		.detail {
+			padding-top: 0;
 			border: none;
+			padding-left:	initial;
+		}
+		.detail:hover {
+			cursor: initial;
+		}
+		.detail .backImage {
+			display: block;
 		}
 		.detail .member-title {
 			display: block;
@@ -66,21 +90,108 @@
 			justify-content: center;
 			align-items:	center;
 		}
-		
 		#cityContainer h3{
+			margin-right:	5px;
+		}
+		:host(hd-team-member) {
+			display:			block;
+			border-bottom: 		solid 1px lightgray;
+			padding-top:	10px;
+			padding-bottom:		20px;
+			padding-left:	20px;
+			color:	black;
+			width:	100%;
+			margin-top: 0;
+		}
+		::content .backImage {
+			position: absolute;
+			top:	70px;
+			left:	16px;
+			display: none;
+		}
+		::content .backImage:hover {
+			cursor: pointer;
+		}
+		::content .member-title {
+			display: none;
+			width:	275px;
+			margin-left:	auto;
+			margin-right:	auto;
+			text-align:center;
+		}
+		::content .member-image {
+            height: 48px;
+            border-radius: 50px;
+            width: 48px;
+			vertical-align:	middle;
+        }
+        ::content #member-reduce {
+            display: inline-block;
+			vertical-align: middle;
+        }
+		::content #member-reduce:hover {
+			cursor: pointer;
+		}
+		::content .hd-member-fn {
+			color: black;
+			font-weight: bold;
+		}
+		::content .hd-member-name {
+			color:				RGB(211,211,211);
+			transition:			color 2s, font-weight 4s;
+		}
+		:host(hd-team-member:hover) ::content .hd-member-name {
+			color: black;
+			font-weight: bold;
+			transition:	0s;
+		}
+		:host(.detail) {
+			padding-top: 0;
+			border: none;
+			padding-left:	initial;
+		}
+		:host(.detail:hover) {
+			cursor: initial;
+		}
+		:host(.detail) ::content .backImage {
+			display: block;
+		}
+		:host(.detail) ::content .member-title {
+			display: block;
+		}
+        :host(.detail) ::content .member-image {
+            width: 100%;
+            border-radius: 0;
+			height:	initial;
+        }
+        :host(.detail)  ::content #member-reduce {
+            display: none;
+        }
+		:host(.detail) .img-project {
+			width:		48px;
+			height:		48px;
+		}
+		::content #member-full {
+			text-align:	center;
+		}
+		::content #member-full ul{
+			text-align:	left;
+		}
+		::content #cityContainer {
+			display: flex;
+			justify-content: center;
+			align-items:	center;
+		}
+		::content #cityContainer h3{
 			margin-right:	5px;
 		}
     </style>
 		<content select=".member-title"></content>
         <content select=".member-image"></content>
-		<div id="member-reduce">
-			<content select=".member-fn"></content>
-			<content select=".member-name"></content>
-		</div>
 		<content></content>
 </template>
 
-<script type="text/javascript" src="https://raw.githubusercontent.com/Open-Initiative/LDP-framework/master/ldpframework.js"></script>
+<script type="text/javascript" src="http://preview.happy-dev.fr/library/LDP-framework/ldpframework.js"></script>
 <script>
     (function(){
         var localDoc = document._currentScript.ownerDocument;
@@ -91,7 +202,6 @@
                 value: function() {
                     this.loadData();
                     var clone = document.importNode(localDoc.querySelector('#member-template').content, true);
-                    this.addEventListener('click', this.toggleDetail);
                     this.createShadowRoot().appendChild(clone);
                 }
             }
@@ -107,10 +217,10 @@
 					img.setAttribute("class","member-image");
                     img.src = member["foaf:img"];
 					var fn = document.createElement("span");
-					fn.setAttribute("class","member-fn");
+					fn.setAttribute("class","hd-member-fn");
 					fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
 					var name = document.createElement("span");
-					name.setAttribute("class","member-name");
+					name.setAttribute("class","hd-member-name");
 					name.appendChild(document.createTextNode(member["foaf:name"]));
 					
 					this.appendChild(memberTitle);
@@ -166,11 +276,6 @@
 								list.appendChild(document.createTextNode(member["skillB"]));
 								skills.appendChild(list);
 							}
-							if(member["skillB"]){
-								var list = document.createElement("li");
-								list.appendChild(document.createTextNode(member["skillB"]));
-								skills.appendChild(list);
-							}
 							if(member["skillC"]){
 								var list = document.createElement("li");
 								list.appendChild(document.createTextNode(member["skillC"]));
@@ -208,8 +313,6 @@
 					cible.remove();
 				}
 			}
-			
-			//console.log(this);
         };
         
         document.registerElement('hd-team-member', {prototype: MemberPrototype});
@@ -222,22 +325,35 @@
                             store.list(this.dataset.src).then(function(list) {
                                 list.forEach(function(member) {
                                     var memberElt = document.createElement("hd-team-member");
+									var backImage = document.createElement("img");
+									backImage.src = "resources/round_back.png";
+									backImage.className = "backImage";
+									backImage.addEventListener("click",function(){
+										this.parentNode.toggleDetail();
+									});
                                     var memberTitle = document.createElement("h2");
 									memberTitle.className ="member-title";
 									memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
 									var img = document.createElement("img");
 									img.className = "member-image";
+									var memberReduce = document.createElement("div");
+									memberReduce.setAttribute("id","member-reduce");
+									memberReduce.addEventListener("click",function(){
+										this.parentNode.toggleDetail();
+									});
 									var fn = document.createElement("span");
-									fn.className = "member-fn";
+									fn.className = "hd-member-fn";
 									fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
+									memberReduce.appendChild(fn);
 									var name = document.createElement("span");
-									name.className = "member-name";
+									name.className = "hd-member-name";
 									name.appendChild(document.createTextNode(member["foaf:name"]));
+									memberReduce.appendChild(name);
                                     img.src = member["foaf:img"];
+									memberElt.appendChild(backImage);
 									memberElt.appendChild(memberTitle);
                                     memberElt.appendChild(img);
-                                    memberElt.appendChild(fn);
-									memberElt.appendChild(name);
+                                    memberElt.appendChild(memberReduce);
                                     memberElt.dataset.src = member["@id"];
                                     this.appendChild(memberElt);
                                 }.bind(this));

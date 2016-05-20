@@ -1,17 +1,30 @@
 <template id="project-template">
     <style scoped>
-		hd-project {
+		hd-projects {
 			display:			block;
 			border-bottom: 		solid 1px lightgray;
 			padding-top:		10px;
 			padding-bottom:		20px;
+			padding-left:	20px;
+			color:	black;
+			width:	100%;
 		}
-		hd-project:hover {
-			cursor:	pointer;
+		.backImage {
+			position: absolute;
+			top:	80px;
+			left:	16px;
+			display: none;
+		}
+		.backImage:hover {
+			cursor: pointer;
 		}
 		.project-title {
 			display: none;
-			text-align: center;
+			width:	275px;
+			margin-left:	auto;
+			margin-right:	auto;
+			text-align:center;
+			margin-top:	0;
 		}
         .project-image {
             height:		48px;
@@ -19,8 +32,18 @@
 			border-radius:	50px;
 			vertical-align:	middle;
         }
+		.reduce-title {
+			font-weight: bold;
+		}
+		.reduce-title:hover {
+			cursor:	pointer;
+		}
         .detail {
 			border:	none;
+			padding-left: initial;
+		}
+		.detail .backImage {
+			display: block;
 		}
 		.detail .project-title {
 			display: block;
@@ -39,6 +62,68 @@
 		#project-full > a{
 			color:	black;
 		}
+		:host(hd-projects) {
+			display:			block;
+			border-bottom: 		solid 1px lightgray;
+			padding-top:		10px;
+			padding-bottom:		20px;
+			color:	black;
+			width:	100%;
+			padding-left:	20px;
+		}
+		::content .backImage {
+			position: absolute;
+			top:	80px;
+			left:	16px;
+			display: none;
+		}
+		::content .backImage:hover {
+			cursor: pointer;
+		}
+		::content .project-title {
+			display: none;
+			width:	275px;
+			margin-left:	auto;
+			margin-right:	auto;
+			text-align:center;
+			margin-top:	0;
+		}
+        ::content .project-image {
+            height:		48px;
+			width:		48px;
+			border-radius:	50px;
+			vertical-align:	middle;
+        }
+		::content .reduce-title {
+			font-weight: bold;
+		}
+		::content .reduce-title:hover {
+			cursor:	pointer;
+		}
+        :host(.detail) {
+			border:	none;
+			padding-left:	initial;
+		}
+		:host(.detail) ::content .backImage {
+			display: block;
+		}
+		:host(.detail) ::content .project-title {
+			display: block;
+		}
+		:host(.detail) ::content .project-image {
+			width:	100%;
+			height:	initial;
+			border-radius:	initial;
+		}
+		:host(.detail) ::content .reduce-title {
+			display:	none;
+		}
+		::content #project-full {
+			text-align: center;
+		}
+		::content #project-full > a{
+			color:	black;
+		}
     </style>
 		<content select=".project-title"></content>
         <content select=".project-image"></content>
@@ -46,7 +131,7 @@
 		<content></content>
 </template>
 
-<script type="text/javascript" src="https://raw.githubusercontent.com/Open-Initiative/LDP-framework/master/ldpframework.js"></script>
+<script type="text/javascript" src="http://preview.happy-dev.fr/library/LDP-framework/ldpframework.js"></script>
 <script>
     (function(){
         var localDoc = document._currentScript.ownerDocument;
@@ -57,7 +142,6 @@
                 value: function() {
                     this.loadData();
                     var clone = document.importNode(localDoc.querySelector('#project-template').content, true);
-                    this.addEventListener('click', this.toggleDetail);
                     this.createShadowRoot().appendChild(clone);
                 }
             }
@@ -128,16 +212,22 @@
 			}
 		};
 		
-        document.registerElement('hd-project', {prototype: ProjectPrototype});
+        document.registerElement('hd-projects', {prototype: ProjectPrototype});
         
-        document.registerElement('hd-project-list', {
+        document.registerElement('hd-projects-list', {
             prototype: Object.create(HTMLElement.prototype, {
                 createdCallback: {
                     value: function() {
                         if(this.dataset.src) {
                             store.list(this.dataset.src).then(function(list) {
                                 list.forEach(function(project) {
-                                    var projectElt = document.createElement("hd-project");
+                                    var projectElt = document.createElement("hd-projects");
+									var backImage = document.createElement("img");
+									backImage.src = "resources/round_back.png";
+									backImage.className = "backImage";
+									backImage.addEventListener("click",function(){
+										this.parentNode.toggleDetail();
+									});
 									var projectTitle = document.createElement("h2");
 									projectTitle.setAttribute("class","project-title");
 									projectTitle.appendChild(document.createTextNode(project["project_title"]));
@@ -147,7 +237,11 @@
 									var projectReduce = document.createElement("span");
 									projectReduce.className = "reduce-title";
 									projectReduce.appendChild(document.createTextNode(project["project_title"]));
-                                    projectElt.appendChild(projectTitle);
+									projectReduce.addEventListener("click",function(){
+										this.parentNode.toggleDetail();
+									});
+                                    projectElt.appendChild(backImage);
+									projectElt.appendChild(projectTitle);
 									projectElt.appendChild(img);
                                     projectElt.appendChild(projectReduce);
 									projectElt.dataset.src = project["@id"];
