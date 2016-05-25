@@ -33,22 +33,22 @@
             width: 48px;
 			vertical-align:	middle;
         }
-        #member-reduce {
+        .reduce-title {
             display: inline-block;
 			vertical-align: middle;
         }
-		#member-reduce:hover {
+		.reduce-title:hover {
 			cursor: pointer;
 		}
-		#member-reduce > .hd-member-fn {
+		.reduce-title > .hd-member-fn {
 			color: black;
 			font-weight: bold;
 		}
-		#member-reduce > .hd-member-name {
+		.reduce-title > .hd-member-name {
 			color:				RGB(211,211,211);
 			transition:			color 2s, font-weight 4s;
 		}
-		hd-team-member:hover #member-reduce > .hd-member-name {
+		hd-team-member:hover .reduce-title > .hd-member-name {
 			color: black;
 			font-weight: bold;
 			transition:	0s;
@@ -72,7 +72,7 @@
             border-radius: 0;
 			height:	initial;
         }
-        .detail #member-reduce {
+        .detail .reduce-title {
             display: none;
         }
 		.detail .img-project {
@@ -125,11 +125,11 @@
             width: 48px;
 			vertical-align:	middle;
         }
-        ::content #member-reduce {
+        ::content .reduce-title {
             display: inline-block;
 			vertical-align: middle;
         }
-		::content #member-reduce:hover {
+		::content .reduce-title:hover {
 			cursor: pointer;
 		}
 		::content .hd-member-fn {
@@ -164,7 +164,7 @@
             border-radius: 0;
 			height:	initial;
         }
-        :host(.detail)  ::content #member-reduce {
+        :host(.detail)  ::content .reduce-title {
             display: none;
         }
 		:host(.detail) .img-project {
@@ -222,11 +222,14 @@
 					var name = document.createElement("span");
 					name.setAttribute("class","hd-member-name");
 					name.appendChild(document.createTextNode(member["foaf:name"]));
+					var memberFull = document.createElement("div");
+					memberFull.setAttribute("id","member-full");
 					
 					this.appendChild(memberTitle);
                     this.appendChild(img);
                     this.appendChild(fn);
 					this.appendChild(name);
+					this.appendChild(member-full);
                 });
             }
         };
@@ -246,8 +249,9 @@
 			if(imag.offsetHeight != 48){
 				if(this.dataset.src){
 					store.get(this.dataset.src).then(function(member){
-						var container = document.createElement("div");
-						container.setAttribute("id","member-full");
+						var container = this.querySelector("#member-full");
+						container.style.display = "block";
+						container.innerHTML = "";
 						if(member["av:biography"]){
 							var bio = document.createElement("p");
 							bio.appendChild(document.createTextNode(member["av:biography"]));
@@ -304,16 +308,45 @@
 								});
 							}.bind(container));
 						}
-						this.appendChild(container);
 					}.bind(this));
 				}
 			}else{
 				if(this.querySelector("#member-full")){
 					var cible = this.querySelector("#member-full");
-					cible.remove();
+					cible.style.display = "none";
 				}
 			}
         };
+		
+		MemberPrototype.slugify = function slugify(value) {
+			var rExps=[
+				{re:/[\xC0-\xC6]/g, ch:'A'},
+				{re:/[\xE0-\xE6]/g, ch:'a'},
+				{re:/[\xC8-\xCB]/g, ch:'E'},
+				{re:/[\xE8-\xEB]/g, ch:'e'},
+				{re:/[\xCC-\xCF]/g, ch:'I'},
+				{re:/[\xEC-\xEF]/g, ch:'i'},
+				{re:/[\xD2-\xD6]/g, ch:'O'},
+				{re:/[\xF2-\xF6]/g, ch:'o'},
+				{re:/[\xD9-\xDC]/g, ch:'U'},
+				{re:/[\xF9-\xFC]/g, ch:'u'},
+				{re:/[\xC7-\xE7]/g, ch:'c'},
+				{re:/[\xD1]/g, ch:'N'},
+				{re:/[\xF1]/g, ch:'n'} ];
+			 
+			// converti les caractères accentués en leurs équivalent alpha
+			for(var i=0, len=rExps.length; i<len; i++)
+				value=value.replace(rExps[i].re, rExps[i].ch);
+			 
+			// 1) met en bas de casse
+			// 2) remplace les espace par des tirets
+			// 3) enleve tout les caratères non alphanumeriques
+			// 4) enlève les doubles tirets
+			return value.toLowerCase()
+				.replace(/\s+/g, '-')
+				.replace(/[^a-z0-9-]/g, '')
+				.replace(/\-{2,}/g,'-');
+		}
         
         document.registerElement('hd-team-member', {prototype: MemberPrototype});
         
@@ -324,22 +357,30 @@
                         if(this.dataset.src) {
                             store.list(this.dataset.src).then(function(list) {
                                 list.forEach(function(member) {
+									var eventSelected = new Event("hdSelected");
                                     var memberElt = document.createElement("hd-team-member");
+									if(member["foaf:nick"])
+										memberElt.setAttribute("id", memberElt.slugify(member["foaf:nick"]));
+									else
+										memberElt.setAttribute("id",memberElt.slugify(member["foaf:firstName"] + " " + member["foaf:name"]));
 									var backImage = document.createElement("img");
-									backImage.src = "resources/round_back.png";
+									backImage.src = "/resources/round_back.png";
 									backImage.className = "backImage";
 									backImage.addEventListener("click",function(){
 										this.parentNode.toggleDetail();
+										this.parentNode.parentNode.dispatchEvent(eventSelected);
 									});
                                     var memberTitle = document.createElement("h2");
 									memberTitle.className ="member-title";
 									memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
 									var img = document.createElement("img");
 									img.className = "member-image";
+									img.src = member["foaf:img"];
 									var memberReduce = document.createElement("div");
-									memberReduce.setAttribute("id","member-reduce");
+									memberReduce.className = "reduce-title";
 									memberReduce.addEventListener("click",function(){
 										this.parentNode.toggleDetail();
+										this.parentNode.parentNode.dispatchEvent(eventSelected);
 									});
 									var fn = document.createElement("span");
 									fn.className = "hd-member-fn";
@@ -349,14 +390,19 @@
 									name.className = "hd-member-name";
 									name.appendChild(document.createTextNode(member["foaf:name"]));
 									memberReduce.appendChild(name);
-                                    img.src = member["foaf:img"];
+									var memberFull = document.createElement("div");
+									memberFull.setAttribute("id","member-full");
 									memberElt.appendChild(backImage);
 									memberElt.appendChild(memberTitle);
                                     memberElt.appendChild(img);
                                     memberElt.appendChild(memberReduce);
+									memberElt.appendChild(memberFull);
                                     memberElt.dataset.src = member["@id"];
                                     this.appendChild(memberElt);
                                 }.bind(this));
+								if(this.dataset.selected){
+									this.querySelector("#"+this.dataset.selected).toggleDetail();
+								}
                             }.bind(this));
                         }
                     }
