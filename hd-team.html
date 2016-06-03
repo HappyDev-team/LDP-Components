@@ -33,22 +33,22 @@
             width: 48px;
 			vertical-align:	middle;
         }
-        #member-reduce {
+        .reduce-title {
             display: inline-block;
 			vertical-align: middle;
         }
-		#member-reduce:hover {
+		.reduce-title:hover {
 			cursor: pointer;
 		}
-		#member-reduce > .hd-member-fn {
+		.reduce-title > .hd-member-fn {
 			color: black;
 			font-weight: bold;
 		}
-		#member-reduce > .hd-member-name {
+		.reduce-title > .hd-member-name {
 			color:				RGB(211,211,211);
 			transition:			color 2s, font-weight 4s;
 		}
-		hd-team-member:hover #member-reduce > .hd-member-name {
+		hd-team-member:hover .reduce-title > .hd-member-name {
 			color: black;
 			font-weight: bold;
 			transition:	0s;
@@ -72,7 +72,7 @@
             border-radius: 0;
 			height:	initial;
         }
-        .detail #member-reduce {
+        .detail .reduce-title {
             display: none;
         }
 		.detail .img-project {
@@ -92,6 +92,15 @@
 		}
 		#cityContainer h3{
 			margin-right:	5px;
+		}
+		#hdProjectDiv img {
+			height: 48px;
+            border-radius: 50px;
+            width: 48px;
+			vertical-align:	middle;
+		}
+		#hdProjectDiv img:hover {
+			cursor:	pointer;
 		}
 		:host(hd-team-member) {
 			display:			block;
@@ -125,11 +134,11 @@
             width: 48px;
 			vertical-align:	middle;
         }
-        ::content #member-reduce {
+        ::content .reduce-title {
             display: inline-block;
 			vertical-align: middle;
         }
-		::content #member-reduce:hover {
+		::content .reduce-title:hover {
 			cursor: pointer;
 		}
 		::content .hd-member-fn {
@@ -164,7 +173,7 @@
             border-radius: 0;
 			height:	initial;
         }
-        :host(.detail)  ::content #member-reduce {
+        :host(.detail)  ::content .reduce-title {
             display: none;
         }
 		:host(.detail) .img-project {
@@ -185,13 +194,23 @@
 		::content #cityContainer h3{
 			margin-right:	5px;
 		}
+		::content #hdProjectDiv img {
+			height: 48px;
+            border-radius: 50px;
+            width: 48px;
+			vertical-align:	middle;
+			margin-left:	10px;
+		}
+		::content #hdProjectDiv img:hover {
+			cursor:	pointer;
+		}
     </style>
 		<content select=".member-title"></content>
         <content select=".member-image"></content>
 		<content></content>
 </template>
 
-<script type="text/javascript" src="http://preview.happy-dev.fr/library/LDP-framework/ldpframework.js"></script>
+<script type="text/javascript" src="http://cdn.happy-dev.fr/LDP-framework/ldpframework.js"></script>
 <script>
     (function(){
         var localDoc = document._currentScript.ownerDocument;
@@ -200,54 +219,25 @@
         var MemberPrototype = Object.create(HTMLElement.prototype, {
             createdCallback: {
                 value: function() {
-                    this.loadData();
                     var clone = document.importNode(localDoc.querySelector('#member-template').content, true);
                     this.createShadowRoot().appendChild(clone);
                 }
             }
         });
         
-        MemberPrototype.loadData = function loadData() {
-            if(this.dataset.src) {
-                store.get(this.dataset.src).then(function(member) {
-					var memberTitle = document.createElement("h2");
-					memberTitle.setAttribute("class","member-title");
-					memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
-                    var img = document.createElement("img");
-					img.setAttribute("class","member-image");
-                    img.src = member["foaf:img"];
-					var fn = document.createElement("span");
-					fn.setAttribute("class","hd-member-fn");
-					fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
-					var name = document.createElement("span");
-					name.setAttribute("class","hd-member-name");
-					name.appendChild(document.createTextNode(member["foaf:name"]));
-					
-					this.appendChild(memberTitle);
-                    this.appendChild(img);
-                    this.appendChild(fn);
-					this.appendChild(name);
-                });
-            }
-        };
-        
         MemberPrototype.toggleDetail = function toggleDetail(event) {
             Array.prototype.forEach.call(this.parentNode.childNodes, (elt) => {
-					//Pour pouvoir modifier la façon dont se cache les images il faudra modifier cette fonction.
-					// Pour cela il faudra certainement remplacer le display: none par un animate ou autre.
                     if(elt != this) elt.style.display = (this.className == "detail"?"block":"none");
 				});
-			//Cette fonction sera certainement aussi à modifier... En fonction des modification au-dessus.
             this.className = (this.className == "detail"?"":"detail");
 			
-			//Voir pour tester la width de l'image l'action qui sera a effectuée?
 			var imag = this.querySelector(".member-image");
-			//console.log(imag.offsetHeight);
 			if(imag.offsetHeight != 48){
 				if(this.dataset.src){
 					store.get(this.dataset.src).then(function(member){
-						var container = document.createElement("div");
-						container.setAttribute("id","member-full");
+						var container = this.querySelector("#member-full");
+						container.style.display = "block";
+						container.innerHTML = "";
 						if(member["av:biography"]){
 							var bio = document.createElement("p");
 							bio.appendChild(document.createTextNode(member["av:biography"]));
@@ -295,73 +285,202 @@
 							container.appendChild(skills);
 						}
 						if(member["foaf:currentProject"]){
-							store.list(member["foaf:currentProject"]).then(function(listing){
-								listing.forEach(function(project){
-									var imgProj = document.createElement("img");
-									imgProj.className("img-project");
-									imgProj.src = project["project_picture"];
-									container.appendChild(imgProj);
-								});
-							}.bind(container));
+							var projectTitle = document.createElement("h3");
+							projectTitle.appendChild(document.createTextNode("PROJETS"));
+							var projectDiv = document.createElement("div");
+							projectDiv.setAttribute("id","hdProjectDiv");
+							if(!member["foaf:currentProject"].length){
+								store.get(member["foaf:currentProject"]["@id"]).then(function(project){
+									var img = document.createElement("img");
+									img.src = project.project_picture;
+									img.addEventListener("click",function(elem){
+										var hdRessourceClicked = new CustomEvent("hdRessourceClicked",{detail: project.project_title});
+										this.parentNode.parentNode.parentNode.parentNode.dispatchEvent(hdRessourceClicked);
+									});
+									projectDiv.appendChild(img);
+								}.bind(projectDiv));
+							}else{
+								member["foaf:currentProject"].forEach(function(projectURL){
+									store.get(projectURL["@id"]).then(function(project){
+										var img = document.createElement("img");
+										img.src = project.project_picture;
+										img.addEventListener("click",function(elem){
+											var hdRessourceClicked = new CustomEvent("hdRessourceClicked",{detail: project.project_title});
+											this.parentNode.parentNode.parentNode.parentNode.dispatchEvent(hdRessourceClicked);
+										});
+										projectDiv.appendChild(img);
+									}.bind(projectDiv));
+								}.bind(projectDiv));
+							}
+							container.appendChild(projectTitle);
+							container.appendChild(projectDiv);
 						}
-						this.appendChild(container);
 					}.bind(this));
 				}
 			}else{
 				if(this.querySelector("#member-full")){
 					var cible = this.querySelector("#member-full");
-					cible.remove();
+					cible.style.display = "none";
 				}
 			}
         };
+		
+		MemberPrototype.slugify = function slugify(value) {
+			var rExps=[
+				{re:/[\xC0-\xC6]/g, ch:'A'},
+				{re:/[\xE0-\xE6]/g, ch:'a'},
+				{re:/[\xC8-\xCB]/g, ch:'E'},
+				{re:/[\xE8-\xEB]/g, ch:'e'},
+				{re:/[\xCC-\xCF]/g, ch:'I'},
+				{re:/[\xEC-\xEF]/g, ch:'i'},
+				{re:/[\xD2-\xD6]/g, ch:'O'},
+				{re:/[\xF2-\xF6]/g, ch:'o'},
+				{re:/[\xD9-\xDC]/g, ch:'U'},
+				{re:/[\xF9-\xFC]/g, ch:'u'},
+				{re:/[\xC7-\xE7]/g, ch:'c'},
+				{re:/[\xD1]/g, ch:'N'},
+				{re:/[\xF1]/g, ch:'n'} ];
+			 
+			// converti les caractères accentués en leurs équivalent alpha
+			for(var i=0, len=rExps.length; i<len; i++)
+				value=value.replace(rExps[i].re, rExps[i].ch);
+			 
+			// 1) met en bas de casse
+			// 2) remplace les espace par des tirets
+			// 3) enleve tout les caratères non alphanumeriques
+			// 4) enlève les doubles tirets
+			return value.toLowerCase()
+				.replace(/\s+/g, '-')
+				.replace(/[^a-z0-9-]/g, '')
+				.replace(/\-{2,}/g,'-');
+		}
         
         document.registerElement('hd-team-member', {prototype: MemberPrototype});
         
-        document.registerElement('hd-team', {
-            prototype: Object.create(HTMLElement.prototype, {
-                createdCallback: {
-                    value: function() {
-                        if(this.dataset.src) {
-                            store.list(this.dataset.src).then(function(list) {
-                                list.forEach(function(member) {
-                                    var memberElt = document.createElement("hd-team-member");
-									var backImage = document.createElement("img");
-									backImage.src = "resources/round_back.png";
-									backImage.className = "backImage";
-									backImage.addEventListener("click",function(){
-										this.parentNode.toggleDetail();
-									});
-                                    var memberTitle = document.createElement("h2");
-									memberTitle.className ="member-title";
-									memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
-									var img = document.createElement("img");
-									img.className = "member-image";
-									var memberReduce = document.createElement("div");
-									memberReduce.setAttribute("id","member-reduce");
-									memberReduce.addEventListener("click",function(){
-										this.parentNode.toggleDetail();
-									});
-									var fn = document.createElement("span");
-									fn.className = "hd-member-fn";
-									fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
-									memberReduce.appendChild(fn);
-									var name = document.createElement("span");
-									name.className = "hd-member-name";
-									name.appendChild(document.createTextNode(member["foaf:name"]));
-									memberReduce.appendChild(name);
-                                    img.src = member["foaf:img"];
-									memberElt.appendChild(backImage);
-									memberElt.appendChild(memberTitle);
-                                    memberElt.appendChild(img);
-                                    memberElt.appendChild(memberReduce);
-                                    memberElt.dataset.src = member["@id"];
-                                    this.appendChild(memberElt);
-                                }.bind(this));
-                            }.bind(this));
-                        }
-                    }
-                }
-            })
-        });
+		var teamPrototype = Object.create(HTMLElement.prototype, {
+			createdCallback: {
+				value: function() {
+					if(this.dataset.src) {
+						store.list(this.dataset.src).then(function(list) {
+							list.forEach(function(member) {
+								var eventSelected;
+								var eventUnSelected = new Event("hdUnSelected");
+								var memberElt = document.createElement("hd-team-member");
+								if(member["foaf:nick"]){
+										memberElt.setAttribute("id", memberElt.slugify(member["foaf:nick"]));
+										eventSelected = new CustomEvent("hdSelected",{detail: memberElt.slugify(member["foaf:nick"])});
+								}else{
+									memberElt.setAttribute("id",memberElt.slugify(member["foaf:firstName"] + " " + member["foaf:name"]));
+									eventSelected = new CustomEvent("hdSelected",{detail: memberElt.slugify(member["foaf:firstName"] + " " + member["foaf:name"])});
+								}
+								var backImage = document.createElement("img");
+								backImage.src = "/resources/round_back.png";
+								backImage.className = "backImage";
+								backImage.addEventListener("click",function(){
+									this.parentNode.parentNode.dispatchEvent(eventUnSelected);
+								});
+								var memberTitle = document.createElement("h2");
+								memberTitle.className ="member-title";
+								memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+								var img = document.createElement("img");
+								img.className = "member-image";
+								img.src = member["foaf:img"];
+								var memberReduce = document.createElement("div");
+								memberReduce.className = "reduce-title";
+								memberReduce.addEventListener("click",function(){
+									this.parentNode.parentNode.dispatchEvent(eventSelected);
+								});
+								var fn = document.createElement("span");
+								fn.className = "hd-member-fn";
+								fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
+								memberReduce.appendChild(fn);
+								var name = document.createElement("span");
+								name.className = "hd-member-name";
+								name.appendChild(document.createTextNode(member["foaf:name"]));
+								memberReduce.appendChild(name);
+								var memberFull = document.createElement("div");
+								memberFull.setAttribute("id","member-full");
+								memberElt.appendChild(backImage);
+								memberElt.appendChild(memberTitle);
+								memberElt.appendChild(img);
+								memberElt.appendChild(memberReduce);
+								memberElt.appendChild(memberFull);
+								memberElt.dataset.src = member["@id"];
+								this.appendChild(memberElt);
+							}.bind(this));
+							if(this.dataset.selected){
+								this.querySelector("#"+this.dataset.selected).toggleDetail();
+							}
+						}.bind(this));
+					}
+				}
+			}
+		});
+		
+		teamPrototype.attributeChangedCallback = function(attribute) {
+			if(attribute == "data-src"){
+				if(this.dataset.src) {
+					store.list(this.dataset.src).then(function(list) {
+						list.forEach(function(member) {
+							var eventSelected;
+							var eventUnSelected = new Event("hdUnSelected");
+							var memberElt = document.createElement("hd-team-member");
+							if(member["foaf:nick"]){
+								memberElt.setAttribute("id", memberElt.slugify(member["foaf:nick"]));
+								eventSelected = new CustomEvent("hdSelected",{detail:memberElt.slugify(member["foaf:nick"])});
+							}else{
+								memberElt.setAttribute("id",memberElt.slugify(member["foaf:firstName"] + " " + member["foaf:name"]));
+								eventSelected = new CustomEvent("hdSelected",{detail:memberElt.slugify(member["foaf:firstName"] + " " + member["foaf:name"])});
+							}
+							var backImage = document.createElement("img");
+							backImage.src = "/resources/round_back.png";
+							backImage.className = "backImage";
+							backImage.addEventListener("click",function(){
+								this.parentNode.parentNode.dispatchEvent(eventUnSelected);
+							});
+							var memberTitle = document.createElement("h2");
+							memberTitle.className ="member-title";
+							memberTitle.appendChild(document.createTextNode(member["foaf:firstName"] + " " + member["foaf:name"]));
+							var img = document.createElement("img");
+							img.className = "member-image";
+							img.src = member["foaf:img"];
+							var memberReduce = document.createElement("div");
+							memberReduce.className = "reduce-title";
+							memberReduce.addEventListener("click",function(){
+								this.parentNode.parentNode.dispatchEvent(eventSelected);
+							});
+							var fn = document.createElement("span");
+							fn.className = "hd-member-fn";
+							fn.appendChild(document.createTextNode(member["foaf:firstName"] + " "));
+							memberReduce.appendChild(fn);
+							var name = document.createElement("span");
+							name.className = "hd-member-name";
+							name.appendChild(document.createTextNode(member["foaf:name"]));
+							memberReduce.appendChild(name);
+							var memberFull = document.createElement("div");
+							memberFull.setAttribute("id","member-full");
+							memberElt.appendChild(backImage);
+							memberElt.appendChild(memberTitle);
+							memberElt.appendChild(img);
+							memberElt.appendChild(memberReduce);
+							memberElt.appendChild(memberFull);
+							memberElt.dataset.src = member["@id"];
+							this.appendChild(memberElt);
+						}.bind(this));
+						if(this.dataset.selected){
+							this.querySelector("#"+this.dataset.selected).toggleDetail();
+						}
+					}.bind(this));
+				}
+			}else if(attribute == "data-selected"){
+				if(this.querySelector(".detail"))
+					this.querySelector(".detail").toggleDetail();
+				if(this.dataset.selected && this.querySelector("#"+this.dataset.selected))
+					this.querySelector("#"+this.dataset.selected).toggleDetail();
+			}
+		}
+		
+        document.registerElement('hd-team',{prototype: teamPrototype});
+		
     })();
 </script>
